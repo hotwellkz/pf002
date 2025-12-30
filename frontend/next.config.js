@@ -18,8 +18,6 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['undici'],
   },
-  // Для Netlify
-  output: 'standalone',
 }
 
 module.exports = nextConfig
