@@ -9,4 +9,7 @@
 # Site settings > Environment variables
 [build.environment]
   NODE_VERSION = "20"
+  # Отключаем умное обнаружение секретов для Firebase API ключей
+  # (Firebase API ключи - публичные и безопасны в клиентском коде)
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
 
