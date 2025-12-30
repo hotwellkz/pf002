@@ -38,28 +38,101 @@ function ListenPageContent() {
         params: { sessionId, mood },
       });
 
-      const { track, streamUrl: url } = response.data;
+      console.log('wave next status', response.status);
+      console.log('wave next data', response.data);
+
+      // Проверяем статус ответа
+      if (!response.data) {
+        setError('Пустой ответ от сервера');
+        setLoading(false);
+        return;
+      }
+
+      const { track, streamUrl: url, reason } = response.data || {};
+
+      // Обработка случая когда треков нет
+      if (!track || !url || reason === 'NO_TRACKS') {
+        setError('Нет доступных треков для этого настроения');
+        setCurrentTrack(null);
+        setStreamUrl(null);
+        setLoading(false);
+        return;
+      }
+
+      // Валидация обязательных полей
+      if (!track || !track.id || !url) {
+        console.error('Bad API response:', { track, url, responseData: response.data });
+        setError('Некорректный ответ от сервера');
+        setCurrentTrack(null);
+        setStreamUrl(null);
+        setLoading(false);
+        return;
+      }
+
+      // Безопасное построение URL
+      if (!API_URL) {
+        console.error('API_URL is undefined');
+        setError('Ошибка конфигурации: API URL не определен');
+        setLoading(false);
+        return;
+      }
+
+      const apiBase = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+      const streamPath = url.startsWith('/') ? url : `/${url}`;
+      const fullStreamUrl = `${apiBase}${streamPath}`;
+
+      console.log('Setting stream URL:', fullStreamUrl);
+
       setCurrentTrack(track);
-      setStreamUrl(`${API_URL}${url}`);
+      setStreamUrl(fullStreamUrl);
 
-      // Отправляем событие play
-      await axios.post(`${API_URL}/api/events`, {
-        sessionId,
-        trackId: track.id,
-        type: 'play',
-        uid: user?.uid,
-      });
+      // Отправляем событие play только если трек валиден
+      try {
+        await axios.post(`${API_URL}/api/events`, {
+          sessionId,
+          trackId: track.id,
+          type: 'play',
+          uid: user?.uid,
+        });
+      } catch (eventErr) {
+        console.warn('Не удалось отправить событие play:', eventErr);
+        // Не блокируем воспроизведение из-за ошибки события
+      }
 
-      // Автоматически начинаем воспроизведение
+      // Автоматически начинаем воспроизведение только если URL валиден
       setTimeout(() => {
-        if (audioRef.current) {
-          audioRef.current.play();
+        if (audioRef.current && fullStreamUrl) {
+          audioRef.current.play().catch((playErr) => {
+            console.error('Ошибка воспроизведения:', playErr);
+            setError('Не удалось воспроизвести трек');
+            setIsPlaying(false);
+          });
           setIsPlaying(true);
         }
       }, 100);
     } catch (err: any) {
       console.error('Ошибка загрузки трека:', err);
-      setError('Не удалось загрузить трек');
+      
+      // Обработка различных типов ошибок
+      if (err.response) {
+        const status = err.response.status;
+        if (status === 204) {
+          setError('Нет доступных треков');
+        } else if (status === 400) {
+          setError(err.response.data?.error || 'Неверный запрос');
+        } else if (status >= 500) {
+          setError('Ошибка сервера. Попробуйте позже');
+        } else {
+          setError(err.response.data?.error || 'Ошибка загрузки трека');
+        }
+      } else if (err.request) {
+        setError('Не удалось подключиться к серверу');
+      } else {
+        setError('Неожиданная ошибка');
+      }
+      
+      setCurrentTrack(null);
+      setStreamUrl(null);
     } finally {
       setLoading(false);
     }
@@ -100,27 +173,36 @@ function ListenPageContent() {
   };
 
   const handleSkip = async () => {
-    if (!sessionId || !currentTrack) return;
+    if (!sessionId || !currentTrack || !currentTrack.id) return;
 
-    await axios.post(`${API_URL}/api/events`, {
-      sessionId,
-      trackId: currentTrack.id,
-      type: 'skip',
-      uid: user?.uid,
-    });
+    try {
+      await axios.post(`${API_URL}/api/events`, {
+        sessionId,
+        trackId: currentTrack.id,
+        type: 'skip',
+        uid: user?.uid,
+      });
+    } catch (err) {
+      console.warn('Не удалось отправить событие skip:', err);
+      // Продолжаем даже если событие не отправилось
+    }
 
     loadNextTrack();
   };
 
   const handleLike = async () => {
-    if (!sessionId || !currentTrack) return;
+    if (!sessionId || !currentTrack || !currentTrack.id) return;
 
-    await axios.post(`${API_URL}/api/events`, {
-      sessionId,
-      trackId: currentTrack.id,
-      type: 'like',
-      uid: user?.uid,
-    });
+    try {
+      await axios.post(`${API_URL}/api/events`, {
+        sessionId,
+        trackId: currentTrack.id,
+        type: 'like',
+        uid: user?.uid,
+      });
+    } catch (err) {
+      console.warn('Не удалось отправить событие like:', err);
+    }
   };
 
   if (!sessionId || !mood) {
@@ -154,20 +236,35 @@ function ListenPageContent() {
           </div>
 
           {error && (
-            <div className="text-red-400 text-center mb-4">{error}</div>
+            <div className="text-red-400 text-center mb-4 p-3 bg-red-900/20 rounded-lg">
+              {error}
+            </div>
           )}
 
           {loading && (
             <div className="text-center text-gray-400 mb-4">Загрузка трека...</div>
           )}
 
-          <audio
-            ref={audioRef}
-            src={streamUrl || undefined}
-            preload="auto"
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-          />
+          {!loading && !error && !currentTrack && (
+            <div className="text-center text-gray-400 mb-4 p-3 bg-gray-800/50 rounded-lg">
+              Нет доступных треков для этого настроения
+            </div>
+          )}
+
+          {streamUrl && (
+            <audio
+              ref={audioRef}
+              src={streamUrl}
+              preload="auto"
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onError={(e) => {
+                console.error('Ошибка загрузки аудио:', e);
+                setError('Ошибка загрузки аудио файла');
+                setIsPlaying(false);
+              }}
+            />
+          )}
 
           <div className="flex justify-center gap-4 mb-6">
             <button

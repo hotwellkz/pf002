@@ -29,19 +29,24 @@ waveRouter.get('/next', async (req: Request, res: Response) => {
     console.log('🎵 Найден трек:', track ? track.id : 'не найден');
 
     if (!track) {
-      // HTTP 204 No Content - нет треков с существующими файлами
-      return res.status(204).send();
+      // Возвращаем 200 с явным указанием отсутствия трека
+      return res.status(200).json({
+        track: null,
+        streamUrl: null,
+        reason: 'NO_TRACKS',
+      });
     }
 
     // Обновляем историю сессии
     await aiWaveService.updateSessionHistory(sessionId, track.id);
 
-    res.json({
+    // Всегда возвращаем согласованный контракт
+    res.status(200).json({
       track: {
         id: track.id,
         mood: track.mood,
-        tags: track.tags,
-        durationSec: track.durationSec,
+        tags: track.tags || [],
+        durationSec: track.durationSec || 0,
       },
       streamUrl: `/api/stream/${track.id}`,
     });

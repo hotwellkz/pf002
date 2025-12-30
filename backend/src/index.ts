@@ -48,6 +48,21 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Root path handler
+app.get('/', (req, res) => {
+  res.json({ 
+    service: 'Playflon API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      session: '/api/session',
+      wave: '/api/wave',
+      stream: '/api/stream',
+      events: '/api/events'
+    }
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Playflon Backend запущен на порту ${PORT}`);
 });

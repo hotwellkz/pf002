@@ -8,7 +8,7 @@ services:
     container_name: playflon-backend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3001"
     volumes:
       - /volume1/docker/playflon/audio:/app/audio:ro
       - ./.env:/app/.env:ro
