@@ -1,0 +1,27 @@
+{
+  "name": "playflon-tools",
+  "version": "1.0.0",
+  "description": "Playflon batch tools (SUNO import)",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/suno_batch.ts",
+    "build": "tsc",
+    "import:suno": "node dist/suno_batch.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.2",
+    "fs-extra": "^11.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/fs-extra": "^11.0.4",
+    "typescript": "^5.3.3",
+    "ts-node-dev": "^2.0.0"
+  }
+}
+
+
+
+

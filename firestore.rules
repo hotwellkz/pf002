@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Треки доступны для чтения всем
+    match /tracks/{trackId} {
+      allow read: if true;
+      allow write: if false; // Только через Admin SDK
+    }
+
+    // События пользователей
+    match /userEvents/{eventId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+      allow update, delete: if false;
+    }
+
+    // Сессии
+    match /sessions/{sessionId} {
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.uid || resource.data.uid == 'anon');
+      allow create: if request.auth != null || request.resource.data.uid == 'anon';
+      allow update: if request.auth != null && 
+        (request.auth.uid == resource.data.uid || resource.data.uid == 'anon');
+      allow delete: if false;
+    }
+
+    // Пользователи
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+
+
+
+

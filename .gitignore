@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Production
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env*.local
+# НО: .env файлы уже созданы с credentials для удобства
+# В production используйте переменные окружения в Docker/Netlify
+
+# Audio files (не коммитим большие файлы)
+audio/**/*.mp3
+audio/**/*.wav
+audio/**/*.m4a
+audio/**/*.flac
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Firebase
+.firebase/
+firebase-debug.log
+
+# Docker
+*.pid
+
