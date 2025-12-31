@@ -213,3 +213,4 @@ curl -i "http://localhost:3001/api/wave/next?sessionId=test&mood=focus"
 - ✅ Файл доступен через `/api/stream/:trackId`
 - ✅ Нет ошибок 204 No Content
 
+

@@ -275,3 +275,4 @@ docker-compose up -d
 **Дата реализации:** $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")  
 **Версия:** 1.0.0
 
+

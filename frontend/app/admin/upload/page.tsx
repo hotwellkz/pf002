@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 
@@ -26,10 +26,37 @@ export default function AdminUploadPage() {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const ALLOWED_EMAIL = 'hotwellkz@gmail.com';
+  // Проверка доступа через custom claims или email (fallback)
+  const checkAdminAccess = async (): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      // Получаем ID token для проверки claims
+      const token = await user.getIdTokenResult();
+      const isAdminByClaim = token.claims.admin === true;
+      const isAdminByEmail = user.email === 'hotwellkz@gmail.com' || user.email === 'hotwell.kz@gmail.com';
+      
+      return isAdminByClaim || isAdminByEmail;
+    } catch (error) {
+      console.error('Ошибка проверки доступа:', error);
+      // Fallback на email проверку
+      return user.email === 'hotwellkz@gmail.com' || user.email === 'hotwell.kz@gmail.com';
+    }
+  };
+
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      checkAdminAccess().then(setIsAdmin);
+    } else if (!authLoading && !user) {
+      setIsAdmin(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading]);
 
   // Проверка доступа
-  if (!authLoading && (!user || user.email !== ALLOWED_EMAIL)) {
+  if (!authLoading && (!user || isAdmin === false)) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <div className="text-center">
@@ -247,4 +274,5 @@ export default function AdminUploadPage() {
     </div>
   );
 }
+
 

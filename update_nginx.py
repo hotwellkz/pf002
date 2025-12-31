@@ -45,3 +45,4 @@ with open('/etc/nginx/sites-available/api.playflon.com', 'w') as f:
 
 print('Config updated successfully')
 
+

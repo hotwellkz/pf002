@@ -290,3 +290,4 @@ docker-compose up -d
 2. Проверить что Firebase token отправляется в заголовке `Authorization: Bearer ...`
 3. Проверить логи backend: `docker-compose logs backend`
 
+

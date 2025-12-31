@@ -10,7 +10,8 @@
     "type-check": "tsc --noEmit",
     "create-test-track": "ts-node scripts/create-test-track.ts",
     "scan-audio": "ts-node scripts/scan-audio-folder.ts",
-    "create-focus-track": "node scripts/create-focus-track.js"
+    "create-focus-track": "node scripts/create-focus-track.js",
+    "set-admin-claim": "ts-node scripts/set-admin-claim.ts"
   },
   "dependencies": {
     "@types/multer": "^2.0.0",
